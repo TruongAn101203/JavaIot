@@ -1,0 +1,26 @@
+--cpu=Cortex-M4.fp.sp
+"rc_car_00\startup_stm32f401xc.o"
+"rc_car_00\main.o"
+"rc_car_00\stm32f4xx_it.o"
+"rc_car_00\stm32f4xx_hal_msp.o"
+"rc_car_00\stm32f4xx_hal_tim.o"
+"rc_car_00\stm32f4xx_hal_tim_ex.o"
+"rc_car_00\stm32f4xx_hal_rcc.o"
+"rc_car_00\stm32f4xx_hal_rcc_ex.o"
+"rc_car_00\stm32f4xx_hal_flash.o"
+"rc_car_00\stm32f4xx_hal_flash_ex.o"
+"rc_car_00\stm32f4xx_hal_flash_ramfunc.o"
+"rc_car_00\stm32f4xx_hal_gpio.o"
+"rc_car_00\stm32f4xx_hal_dma_ex.o"
+"rc_car_00\stm32f4xx_hal_dma.o"
+"rc_car_00\stm32f4xx_hal_pwr.o"
+"rc_car_00\stm32f4xx_hal_pwr_ex.o"
+"rc_car_00\stm32f4xx_hal_cortex.o"
+"rc_car_00\stm32f4xx_hal.o"
+"rc_car_00\stm32f4xx_hal_exti.o"
+"rc_car_00\stm32f4xx_hal_uart.o"
+"rc_car_00\system_stm32f4xx.o"
+--strict --scatter "RC_Car_00\RC_Car_00.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "RC_Car_00.map" -o RC_Car_00\RC_Car_00.axf
