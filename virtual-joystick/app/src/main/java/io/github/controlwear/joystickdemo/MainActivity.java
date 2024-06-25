@@ -62,11 +62,10 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        Log.d("ADebugBinary", "Value: " + packet + " " + decimalValue ; Log.d("ADebugTag", "Value: " + ConvertChar(packet) + " " + ConvertChar(decimalValue));
-                        packet = Convert4Binary(bright)+Convert4Binary(bleft)); int decimalValue = Integer.parseInt(binaryString, 2); sendData(packet); (edited)
-
-                                // Sleep for 1 millisecond
-                                Thread.sleep(80);
+                        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
+                        int decimalValue = Integer.parseInt(packet, 2);
+                        sendData(packet);
+                        Thread.sleep(80);
                     } catch (InterruptedException e) {
                         // Handle interruption if needed
                         Thread.currentThread().interrupt();
@@ -74,17 +73,23 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 
-        private void sendData(final String data) {
+    public String Convert4Binary(byte value) {
+        return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
+    }
+    public char ConvertChar(String binaryString) {
+        int charCode = Integer.parseInt(binaryString, 2);
+        return (char) charCode;
+    }
+
+    private void sendData(final String data) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-//                    byte[] sendData = data.getBytes("UTF-8");
-                    byte sendData = (byte) data;
+                    byte[] sendData = data.getBytes("UTF-8");
+//                    byte sendData = (byte) data;
 //                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
                     socket.send(packet);
