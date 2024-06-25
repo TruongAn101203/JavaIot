@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
@@ -74,5 +76,21 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }
+
+        private void sendData(final String data) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+//                    byte[] sendData = data.getBytes("UTF-8");
+                    byte sendData = (byte) data;
+//                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
+                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+                    socket.send(packet);
+                } catch (IOException e) {
+                }
+            }
+        }).start();
     }
 }
