@@ -87,6 +87,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Bên trong joystickRight.setOnMoveListener
+        final JoystickView joystickRight = findViewById(R.id.joystickView_right);
+        joystickRight.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @SuppressLint("DefaultLocale")
+            @Override
+            public void onMove(int angle, int strength) {
+                mTextViewAngleRight.setText(angle + "°");
+                mTextViewStrengthRight.setText(strength + "%");
+                if (strength > 98) strength = 98;
+                if (angle <= 270 && angle >= 90) {
+                    bright = map(strength, 0, 98, angleChange, 0);
+                    mViewServo.setText("Servo: " + String.valueOf(bright));
+                } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
+                    bright = map(strength, 0, 98, angleChange, 100);
+                    mViewServo.setText("Servo: " + String.valueOf(bright));
+                }
+            }
+        });
 
     }
 
