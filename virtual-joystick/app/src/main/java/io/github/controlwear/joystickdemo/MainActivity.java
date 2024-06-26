@@ -154,6 +154,120 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+            @Override
+            public boolean dispatchGenericMotionEvent(MotionEvent event) {
+                if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK &&
+                        event.getAction() == MotionEvent.ACTION_MOVE) {
+                    processJoystickInput(event);
+                    return true;
+                }
+                return super.dispatchGenericMotionEvent(event);
+            }
+
+
+            private void processJoystickInput(MotionEvent event) {
+                InputDevice device = event.getDevice();
+                if (device != null) {
+                    float lx = getCenteredAxis(event, device, MotionEvent.AXIS_X);
+                    float ly = -getCenteredAxis(event, device, MotionEvent.AXIS_Y);
+                    float rx = getCenteredAxis(event, device, MotionEvent.AXIS_Z);
+                    float ry = getCenteredAxis(event, device, MotionEvent.AXIS_RZ);
+
+                    // Map these values to the virtual joystick updates
+                    int leftAngle = calculateAngle(lx, ly);
+                    int leftStrength = calculateStrength(lx, ly);
+                    updateLeftJoystick(leftAngle, leftStrength);
+
+                    int rightAngle = calculateAngle(rx, ry);
+                    int rightStrength = calculateStrength(rx, ry);
+                    updateRightJoystick(rightAngle, rightStrength);
+                }
+            }
+
+
+            private float getCenteredAxis(MotionEvent event, InputDevice device, int axis) {
+                InputDevice.MotionRange range = device.getMotionRange(axis, event.getSource());
+                if (range != null) {
+                    float value = event.getAxisValue(axis);
+                    float flat = range.getFlat();
+                    if (Math.abs(value) > flat) {
+                        return value;
+                    }
+                }
+                return 0;
+            }
+
+
+            private int calculateAngle(float x, float y) {
+                double angle = Math.toDegrees(Math.atan2(y, x));
+                if (angle < 0) {
+                    angle += 360;
+                }
+                return (int) angle;
+            }
+
+
+            private int calculateStrength(float x, float y) {
+                return (int) (Math.sqrt(x * x + y * y) * 100);
+            }
+
+
+            JoystickView joystickLeft = findViewById(R.id.joystickView_left);
+            joystickLeft.setOnMoveListener(new JoystickView.OnMoveListener() {
+                @Override
+                public void onMove(int angle, int strength) {
+                    updateLeftJoystick(angle, strength);
+                }
+            });
+
+
+            JoystickView joystickRight = findViewById(R.id.joystickView_right);
+            joystickRight.setOnMoveListener(new JoystickView.OnMoveListener() {
+                @Override
+                public void onMove(int angle, int strength) {
+                    updateRightJoystick(angle, strength);
+                }
+            });
+       
+            private void updateLeftJoystick(int angle, int strength) {
+            mTextViewAngleLeft.setText(angle + "°");
+            mTextViewStrengthLeft.setText(strength + "%");
+            if (strength > 98) strength = 98;
+            if (angle <= 180 && angle >= 0) {
+                bleft = map(strength, 0, 98, 100, maxSpeed + 100);
+                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+            } else if (angle <= 360 && angle >= 180) {
+                bleft = map(strength, 0, 98, 100, 100 - maxSpeed);
+                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+            }
+    //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
+    //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
+    //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
+            String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
+            int decimalValue = Integer.parseInt(packet, 2);
+            Log.d("ADebugBinary", "Value: " + packet + " " + decimalValue);
+            Log.d("ADebugTag", "Value: " + ConvertChar(packet) + " " + decimalValue);
+        }
+        public String Convert4Binary(byte value) {
+            return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
+        }
+        public char ConvertChar(String binaryString) {
+            int charCode = Integer.parseInt(binaryString, 2);
+            return (char) charCode;
+        }
+
+        private void updateRightJoystick(int angle, int strength) {
+            mTextViewAngleRight.setText(angle + "°");
+            mTextViewStrengthRight.setText(strength + "%");
+            if (strength > 98) strength = 98;
+            if (angle <= 270 && angle >= 90) {
+                bright = map(strength, 0, 98, angleChange, 0);
+                mViewServo.setText("Servo: " + String.valueOf(bright));
+            } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
+                bright = map(strength, 0, 98, angleChange, 100);
+                mViewServo.setText("Servo: " + String.valueOf(bright));
+            }
+        }
 
 
         JoystickView joystickLeft = findViewById(R.id.joystickView_left);
@@ -192,6 +306,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
 
     }
 
