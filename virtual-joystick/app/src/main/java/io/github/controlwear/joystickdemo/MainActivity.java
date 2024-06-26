@@ -68,7 +68,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        JoystickView joystickLeft = findViewById(R.id.joystickView_left);
+        joystickLeft.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+                mTextViewAngleLeft.setText(angle + "°");
+                mTextViewStrengthLeft.setText(strength + "%");
+                if (strength > 98) strength = 98;
+                if (angle <= 180 && angle >= 0) {
+                    bleft = map(strength, 0, 98, 100, maxSpeed + 100);
+                    mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+                } else if (angle <= 360 && angle >= 180) {
+                    bleft = map(strength, 0, 98, 100, 100-maxSpeed);
+                    mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+                }
+                Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
+            }
+        });
+
+
     }
+
+
+}
 
     @Override
     protected void onDestroy() {
