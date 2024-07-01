@@ -67,13 +67,13 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
-                        int decimalValue = Integer.parseInt(packet, 2);
-                        sendData(packet);
+                        int packet = combineByte((byte) bleft, (byte) bright);
+                        sendData(String.valueOf(packet));
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                         // Handle interruption if needed
                         Thread.currentThread().interrupt();
+                        e.printStackTrace();
                     }
                 }
             }
@@ -149,33 +149,47 @@ public class MainActivity extends AppCompatActivity {
     private void updateLeftJoystick(int angle, int strength) {
         mTextViewAngleLeft.setText(angle + "°");
         mTextViewStrengthLeft.setText(strength + "%");
-        if (strength > 98) strength = 98;
-        if (angle <= 180 && angle >= 0) {
-            bleft = map(strength, 0, 98, 100, maxSpeed + 100);
-            mViewSpeed.setText("Speed: " + String.valueOf(bleft));
-        } else if (angle <= 360 && angle >= 180) {
-            bleft = map(strength, 0, 98, 100, 100 - maxSpeed);
-            mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+        try {if (strength > 98) strength = 98;
+            if (angle <= 180 && angle >= 0) {
+                bleft = map(strength, 0, 98, 100, maxSpeed + 100);
+                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+            } else if (angle <= 360 && angle >= 180) {
+                bleft = map(strength, 0, 98, 100, 100 - maxSpeed);
+                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+            }
+            //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
+            //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
+            //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
+//        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
+
+            int packet = combineByte((byte) bleft, (byte) bright);
+//            int decimalValue = Integer.parseInt(packet, 2);
+            Log.d("ADebugBinary", "\nValue: " + packet + " " );
+            printBinary((byte) bleft, (byte) bright);
+            Log.d("ADebugTag", "b Left =: " + bleft + "b Right =:" + bright);
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
-        //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
-        //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
-        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
-        int decimalValue = Integer.parseInt(packet, 2);
-        Log.d("ADebugBinary", "Value: " + packet + " " + decimalValue);
-        Log.d("ADebugTag", "Value: " + ConvertChar(packet) + " " + decimalValue);
     }
 
     private void updateRightJoystick(int angle, int strength) {
         mTextViewAngleRight.setText(angle + "°");
         mTextViewStrengthRight.setText(strength + "%");
-        if (strength > 98) strength = 98;
-        if (angle <= 270 && angle >= 90) {
-            bright = map(strength, 0, 98, angleChange, 0);
-            mViewServo.setText("Servo: " + String.valueOf(bright));
-        } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
-            bright = map(strength, 0, 98, angleChange, 100);
-            mViewServo.setText("Servo: " + String.valueOf(bright));
+        try {if (strength > 98) strength = 98;
+            if (angle <= 270 && angle >= 90) {
+                bright = map(strength, 0, 98, angleChange, 0);
+                mViewServo.setText("Servo: " + String.valueOf(bright));
+            } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
+                bright = map(strength, 0, 98, angleChange, 100);
+                mViewServo.setText("Servo: " + String.valueOf(bright));
+            }
+            int packet = combineByte((byte) bleft, (byte) bright);
+//            int decimalValue = Integer.parseInt(packet, 2);
+            Log.d("ADebugBinary", "Value: " + packet + " " );
+            printBinary((byte) bleft, (byte) bright);
+            Log.d("ADebugTag", "b Left =: " + bleft + "b Right =:" + bright);
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -193,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         InputDevice device = event.getDevice();
         if (device != null) {
             float lx = getCenteredAxis(event, device, MotionEvent.AXIS_X);
-            float ly = -getCenteredAxis(event, device, MotionEvent.AXIS_Y);
+            float ly = getCenteredAxis(event, device, MotionEvent.AXIS_Y);
             float rx = getCenteredAxis(event, device, MotionEvent.AXIS_Z);
             float ry = getCenteredAxis(event, device, MotionEvent.AXIS_RZ);
 
@@ -231,13 +245,38 @@ public class MainActivity extends AppCompatActivity {
     private int calculateStrength(float x, float y) {
         return (int) (Math.sqrt(x * x + y * y) * 100);
     }
+//
+//    public String Convert4Binary(byte value) {
+//        return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
+//    }
+//    public char ConvertChar(String binaryString) {
+//        int charCode = Integer.parseInt(binaryString, 2);
+//        return (char) charCode;
+//    }
 
-    public String Convert4Binary(byte value) {
-        return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
+    public void printBinary(byte bleft, byte bright){
+        String bleftBinary = String.format("%4s", Integer.toBinaryString(bleft & 0xFF)).replace(' ', '0');
+        String brightBinary = String.format("%4s", Integer.toBinaryString(bright & 0xFF)).replace(' ', '0');
+
+        System.out.println("bleft (nhị phân): " + bleftBinary);
+        System.out.println("bright (nhị phân): " + brightBinary);
+
+        // Dịch trái bright 4 lần
+        int shiftedBright = (bright & 0xFF) << 4;
+
+        // In giá trị nhị phân của bright sau khi dịch trái
+        System.out.println("bright sau khi dịch trái 4 lần (nhị phân): " + Integer.toBinaryString(shiftedBright));
+
+        // Kết hợp bleft và shiftedBright bằng phép toán OR
+        int result = (bleft & 0xFF) | shiftedBright;
+
+        // Trả về kết quả
+        System.out.println("bright sau khi dịch trái 4 lần (nhị phân): " + result);
     }
-    public char ConvertChar(String binaryString) {
-        int charCode = Integer.parseInt(binaryString, 2);
-        return (char) charCode;
+
+    public int combineByte(byte bleft, byte bright) {
+        // Dịch trái bright 4 lần rồi kết hợp với bleft bằng phép OR
+        return (bright << 4) | (bleft & 0x0F);
     }
 
     private void sendData(final String data) {
