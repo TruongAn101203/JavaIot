@@ -151,10 +151,10 @@ public class MainActivity extends AppCompatActivity {
         mTextViewStrengthLeft.setText(strength + "%");
         try {if (strength > 98) strength = 98;
             if (angle <= 180 && angle >= 0) {
-                bleft = map(strength, 0, 98, 100, maxSpeed + 100);
+                bleft = map(strength, 0, 98, 7, 15);
                 mViewSpeed.setText("Speed: " + String.valueOf(bleft));
             } else if (angle <= 360 && angle >= 180) {
-                bleft = map(strength, 0, 98, 100, 100 - maxSpeed);
+                bleft = map(strength, 0, 98, 0, 7);
                 mViewSpeed.setText("Speed: " + String.valueOf(bleft));
             }
             //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
@@ -162,11 +162,7 @@ public class MainActivity extends AppCompatActivity {
             //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
 //        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
 
-            int packet = combineByte((byte) bleft, (byte) bright);
-//            int decimalValue = Integer.parseInt(packet, 2);
-            Log.d("ADebugBinary", "\nValue: " + packet + " " );
             printBinary((byte) bleft, (byte) bright);
-            Log.d("ADebugTag", "b Left =: " + bleft + "b Right =:" + bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -177,17 +173,13 @@ public class MainActivity extends AppCompatActivity {
         mTextViewStrengthRight.setText(strength + "%");
         try {if (strength > 98) strength = 98;
             if (angle <= 270 && angle >= 90) {
-                bright = map(strength, 0, 98, angleChange, 0);
+                bright = map(strength, 0, 98, 7, 0);
                 mViewServo.setText("Servo: " + String.valueOf(bright));
             } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
-                bright = map(strength, 0, 98, angleChange, 100);
+                bright = map(strength, 0, 98, 7, 15);
                 mViewServo.setText("Servo: " + String.valueOf(bright));
             }
-            int packet = combineByte((byte) bleft, (byte) bright);
-//            int decimalValue = Integer.parseInt(packet, 2);
-            Log.d("ADebugBinary", "Value: " + packet + " " );
             printBinary((byte) bleft, (byte) bright);
-            Log.d("ADebugTag", "b Left =: " + bleft + "b Right =:" + bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -255,8 +247,14 @@ public class MainActivity extends AppCompatActivity {
 //    }
 
     public void printBinary(byte bleft, byte bright){
+        int packet = combineByte((byte) bleft, (byte) bright);
+
+        Log.d("ADebugBinary", "Value: " + packet + " " );
+        Log.d("ADebugTag", "b Left =: " + bleft + "; b Right =:" + bright);
+
         String bleftBinary = String.format("%4s", Integer.toBinaryString(bleft & 0xFF)).replace(' ', '0');
         String brightBinary = String.format("%4s", Integer.toBinaryString(bright & 0xFF)).replace(' ', '0');
+        String rsBinary = String.format("%4s", Integer.toBinaryString(packet & 0xFF)).replace(' ', '0');
 
         System.out.println("bleft (nhị phân): " + bleftBinary);
         System.out.println("bright (nhị phân): " + brightBinary);
@@ -272,6 +270,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Trả về kết quả
         System.out.println("bright sau khi dịch trái 4 lần (nhị phân): " + result);
+        // Trả về kết quả
+        System.out.println("Ket qua cuoi sau khi cong byte: " + rsBinary);
+
+        try {
+            String data = String.valueOf(packet);
+            byte[] sendData = data.getBytes("UTF-8");
+            System.out.println("Data packet: " + sendData + " Length: " + sendData.length);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public int combineByte(byte bleft, byte bright) {
@@ -285,8 +293,6 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     byte[] sendData = data.getBytes("UTF-8");
-//                    byte sendData = (byte) data;
-//                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
                     socket.send(packet);
                 } catch (IOException e) {
@@ -306,4 +312,5 @@ public class MainActivity extends AppCompatActivity {
     public int map(int x, int in_min, int in_max, int out_min, int out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
+
 }
