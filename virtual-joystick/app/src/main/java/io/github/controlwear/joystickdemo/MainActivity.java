@@ -80,32 +80,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-//        mSeekSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//            @Override
-//            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-//                mViewSpeed.setText("Speed: " + String.valueOf(i));
-//                maxSpeed = i;
-//            }
-//            @Override
-//            public void onStartTrackingTouch(SeekBar seekBar) {}
-//            @Override
-//            public void onStopTrackingTouch(SeekBar seekBar) {}
-//        });
-//
-//        mSeekServo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//            @Override
-//            public void onProgressChanged(SeekBar seekBar, byte i, boolean b) {
-//                mViewServo.setText("Servo: " + String.valueOf(i));
-//                angleChange = i;
-//                bright = i;
-//            }
-
-//            @Override
-//            public void onStartTrackingTouch(SeekBar seekBar) {}
-//
-//            @Override
-//            public void onStopTrackingTouch(SeekBar seekBar) {}
-//        });
 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -151,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateLeftJoystick(int angle, int strength) {
         mTextViewAngleLeft.setText(angle + "°");
         mTextViewStrengthLeft.setText(strength + "%");
+
         try {if (strength > 98) strength = 100;
             if (angle < 180 && angle > 0) {
                 bleft = map(strength, 0, 100, 8, 14);
@@ -161,12 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
             mViewSpeed.setText("Speed: " + String.valueOf(bleft));
 
-            //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
-            //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
-            //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
-//        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
-
-            printBinary((byte) bleft, (byte) bright);
+            printBinary(bleft, bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -175,18 +145,20 @@ public class MainActivity extends AppCompatActivity {
     private void updateRightJoystick(int angle, int strength) {
         mTextViewAngleRight.setText(angle + "°");
         mTextViewStrengthRight.setText(strength + "%");
+
         try {
             if (strength >= 98)
                 strength = 100;
-            if (angle < 267 && angle > 93) {
+            if (angle < 270 && angle > 90) {
                 bright = map(strength, 0, 100, 6, 0);
-            } else if (((angle < 87 && angle > 3) || (angle > 273 && angle < 357))) {
+            } else if (((angle < 90 && angle >= 0) || (angle > 270 && angle < 360))) {
                 bright = map(strength, 0, 100, 8, 14);
             }
             else bright = 7;
 
             mViewServo.setText("Servo: " + String.valueOf(bright));
-            printBinary((byte) bleft, (byte) bright);
+
+            printBinary(bleft, bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -244,14 +216,6 @@ public class MainActivity extends AppCompatActivity {
     private int calculateStrength(float x, float y) {
         return (int) (Math.sqrt(x * x + y * y) * 100);
     }
-//
-//    public String Convert4Binary(byte value) {
-//        return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
-//    }
-//    public char ConvertChar(String binaryString) {
-//        int charCode = Integer.parseInt(binaryString, 2);
-//        return (char) charCode;
-//    }
 
     public void printBinary(byte bleft, byte bright){
         int packet = combineByte((byte) bleft, (byte) bright);
@@ -294,26 +258,11 @@ public class MainActivity extends AppCompatActivity {
         return (byte) ((bright << 4) | (bleft & 0x0F));
     }
 
-    private void sendData(final String data) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    byte[] sendData = data.getBytes("UTF-8");
-                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
-                    socket.send(packet);
-                } catch (IOException e) {
-                }
-            }
-        }).start();
-    }
     private void sendData(final byte data) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-//                    byte sendData = data;
-//                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     byte sendData = data;
                     DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     socket.send(packet);
@@ -335,4 +284,17 @@ public class MainActivity extends AppCompatActivity {
         return (byte)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
     }
 
+//    private void sendData(final String data) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    byte[] sendData = data.getBytes("UTF-8");
+//                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+//                    socket.send(packet);
+//                } catch (IOException e) {
+//                }
+//            }
+//        }).start();
+//    }
 }
