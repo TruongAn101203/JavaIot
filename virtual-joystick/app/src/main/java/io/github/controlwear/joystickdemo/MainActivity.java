@@ -41,7 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTextViewStrengthRight;
 //    private TextView mTextViewCoordinateRight;
 
-    int bleft = 100, bright = 50, maxSpeed = 50, angleChange = 50;
+    byte bleft = 7, bright = 7;
+    int maxSpeed = 50, angleChange = 50;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +68,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        int packet = combineByte((byte) bleft, (byte) bright);
-                        sendData(String.valueOf(packet));
+                        byte packet = combineByte((byte) bleft, (byte) bright);
+//                        sendData(String.valueOf(packet));
+                        sendData(packet);
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                         // Handle interruption if needed
@@ -77,32 +79,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        });
-        mSeekSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                mViewSpeed.setText("Speed: " + String.valueOf(i));
-                maxSpeed = i;
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        mSeekServo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                mViewServo.setText("Servo: " + String.valueOf(i));
-                angleChange = i;
-                bright = i;
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
         connectButton.setOnClickListener(new View.OnClickListener() {
@@ -149,20 +125,18 @@ public class MainActivity extends AppCompatActivity {
     private void updateLeftJoystick(int angle, int strength) {
         mTextViewAngleLeft.setText(angle + "°");
         mTextViewStrengthLeft.setText(strength + "%");
-        try {if (strength > 98) strength = 98;
-            if (angle <= 180 && angle >= 0) {
-                bleft = map(strength, 0, 98, 7, 15);
-                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
-            } else if (angle <= 360 && angle >= 180) {
-                bleft = map(strength, 0, 98, 0, 7);
-                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
-            }
-            //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
-            //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
-            //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
-//        String packet = Convert4Binary((byte)bright)+Convert4Binary((byte)bleft);
 
-            printBinary((byte) bleft, (byte) bright);
+        try {if (strength > 98) strength = 100;
+            if (angle < 180 && angle > 0) {
+                bleft = map(strength, 0, 100, 8, 14);
+            } else if (angle < 360 && angle > 180) {
+                bleft = map(strength, 0, 100, 6, 0);
+            }
+            else bleft = 7;
+
+            mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+
+            printBinary(bleft, bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -171,15 +145,20 @@ public class MainActivity extends AppCompatActivity {
     private void updateRightJoystick(int angle, int strength) {
         mTextViewAngleRight.setText(angle + "°");
         mTextViewStrengthRight.setText(strength + "%");
-        try {if (strength > 98) strength = 98;
-            if (angle <= 270 && angle >= 90) {
-                bright = map(strength, 0, 98, 7, 0);
-                mViewServo.setText("Servo: " + String.valueOf(bright));
-            } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
-                bright = map(strength, 0, 98, 7, 15);
-                mViewServo.setText("Servo: " + String.valueOf(bright));
+
+        try {
+            if (strength >= 98)
+                strength = 100;
+            if (angle < 270 && angle > 90) {
+                bright = map(strength, 0, 100, 6, 0);
+            } else if (((angle < 90 && angle >= 0) || (angle > 270 && angle < 360))) {
+                bright = map(strength, 0, 100, 8, 14);
             }
-            printBinary((byte) bleft, (byte) bright);
+            else bright = 7;
+
+            mViewServo.setText("Servo: " + String.valueOf(bright));
+
+            printBinary(bleft, bright);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -199,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
         InputDevice device = event.getDevice();
         if (device != null) {
             float lx = getCenteredAxis(event, device, MotionEvent.AXIS_X);
-            float ly = getCenteredAxis(event, device, MotionEvent.AXIS_Y);
+            float ly = -getCenteredAxis(event, device, MotionEvent.AXIS_Y);
             float rx = getCenteredAxis(event, device, MotionEvent.AXIS_Z);
             float ry = getCenteredAxis(event, device, MotionEvent.AXIS_RZ);
 
@@ -237,14 +216,6 @@ public class MainActivity extends AppCompatActivity {
     private int calculateStrength(float x, float y) {
         return (int) (Math.sqrt(x * x + y * y) * 100);
     }
-//
-//    public String Convert4Binary(byte value) {
-//        return String.format("%4s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0').substring(4);
-//    }
-//    public char ConvertChar(String binaryString) {
-//        int charCode = Integer.parseInt(binaryString, 2);
-//        return (char) charCode;
-//    }
 
     public void printBinary(byte bleft, byte bright){
         int packet = combineByte((byte) bleft, (byte) bright);
@@ -282,18 +253,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int combineByte(byte bleft, byte bright) {
+    public byte combineByte(byte bleft, byte bright) {
         // Dịch trái bright 4 lần rồi kết hợp với bleft bằng phép OR
-        return (bright << 4) | (bleft & 0x0F);
+        return (byte) ((bright << 4) | (bleft & 0x0F));
     }
 
-    private void sendData(final String data) {
+    private void sendData(final byte data) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    byte[] sendData = data.getBytes("UTF-8");
-                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+                    byte sendData = data;
+                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     socket.send(packet);
                 } catch (IOException e) {
                 }
@@ -309,8 +280,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int map(int x, int in_min, int in_max, int out_min, int out_max) {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    public byte map(int x, int in_min, int in_max, int out_min, int out_max) {
+        return (byte)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
     }
 
+//    private void sendData(final String data) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    byte[] sendData = data.getBytes("UTF-8");
+//                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+//                    socket.send(packet);
+//                } catch (IOException e) {
+//                }
+//            }
+//        }).start();
+//    }
 }
