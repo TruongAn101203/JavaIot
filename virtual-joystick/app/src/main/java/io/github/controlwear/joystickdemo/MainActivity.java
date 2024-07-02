@@ -312,8 +312,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    byte[] sendData = new byte[]{data};
-                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+//                    byte sendData = data;
+//                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
+                    byte sendData = data;
+                    DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     socket.send(packet);
                 } catch (IOException e) {
                 }
