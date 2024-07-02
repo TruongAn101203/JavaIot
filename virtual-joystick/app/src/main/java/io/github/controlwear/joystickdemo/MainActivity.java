@@ -41,7 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTextViewStrengthRight;
 //    private TextView mTextViewCoordinateRight;
 
-    int bleft = 100, bright = 50, maxSpeed = 50, angleChange = 50;
+    byte bleft = 7, bright = 7;
+    int maxSpeed = 50, angleChange = 50;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +68,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        int packet = combineByte((byte) bleft, (byte) bright);
-                        sendData(String.valueOf(packet));
+                        byte packet = combineByte((byte) bleft, (byte) bright);
+//                        sendData(String.valueOf(packet));
+                        sendData(packet);
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                         // Handle interruption if needed
@@ -78,32 +80,32 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        mSeekSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                mViewSpeed.setText("Speed: " + String.valueOf(i));
-                maxSpeed = i;
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
+//        mSeekSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            @Override
+//            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+//                mViewSpeed.setText("Speed: " + String.valueOf(i));
+//                maxSpeed = i;
+//            }
+//            @Override
+//            public void onStartTrackingTouch(SeekBar seekBar) {}
+//            @Override
+//            public void onStopTrackingTouch(SeekBar seekBar) {}
+//        });
+//
+//        mSeekServo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            @Override
+//            public void onProgressChanged(SeekBar seekBar, byte i, boolean b) {
+//                mViewServo.setText("Servo: " + String.valueOf(i));
+//                angleChange = i;
+//                bright = i;
+//            }
 
-        mSeekServo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                mViewServo.setText("Servo: " + String.valueOf(i));
-                angleChange = i;
-                bright = i;
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
+//            @Override
+//            public void onStartTrackingTouch(SeekBar seekBar) {}
+//
+//            @Override
+//            public void onStopTrackingTouch(SeekBar seekBar) {}
+//        });
 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -149,14 +151,16 @@ public class MainActivity extends AppCompatActivity {
     private void updateLeftJoystick(int angle, int strength) {
         mTextViewAngleLeft.setText(angle + "°");
         mTextViewStrengthLeft.setText(strength + "%");
-        try {if (strength > 98) strength = 98;
-            if (angle <= 180 && angle >= 0) {
-                bleft = map(strength, 0, 98, 7, 15);
-                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
-            } else if (angle <= 360 && angle >= 180) {
-                bleft = map(strength, 0, 98, 0, 7);
-                mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+        try {if (strength > 98) strength = 100;
+            if (angle < 180 && angle > 0) {
+                bleft = map(strength, 0, 100, 8, 14);
+            } else if (angle < 360 && angle > 180) {
+                bleft = map(strength, 0, 100, 6, 0);
             }
+            else bleft = 7;
+
+            mViewSpeed.setText("Speed: " + String.valueOf(bleft));
+
             //        Log.d("ADebugBinary", "Value: " + Byte.toString((byte) bleft) + Byte.toString((byte) bright));
             //        Log.d("ADebugBinary", "Value: " + Convert4Binary((byte)bright)+Convert4Binary((byte)bleft));
             //        Log.d("ADebugTag", "Value: " + ConvertChar(Convert4Binary((byte)bright)+Convert4Binary((byte)bleft)));
@@ -171,14 +175,17 @@ public class MainActivity extends AppCompatActivity {
     private void updateRightJoystick(int angle, int strength) {
         mTextViewAngleRight.setText(angle + "°");
         mTextViewStrengthRight.setText(strength + "%");
-        try {if (strength > 98) strength = 98;
-            if (angle <= 270 && angle >= 90) {
-                bright = map(strength, 0, 98, 7, 0);
-                mViewServo.setText("Servo: " + String.valueOf(bright));
-            } else if (((angle <= 90 && angle >= 0) || (angle <= 360 && angle >= 270))) {
-                bright = map(strength, 0, 98, 7, 15);
-                mViewServo.setText("Servo: " + String.valueOf(bright));
+        try {
+            if (strength >= 98)
+                strength = 100;
+            if (angle < 267 && angle > 93) {
+                bright = map(strength, 0, 100, 6, 0);
+            } else if (((angle < 87 && angle > 3) || (angle > 273 && angle < 357))) {
+                bright = map(strength, 0, 100, 8, 14);
             }
+            else bright = 7;
+
+            mViewServo.setText("Servo: " + String.valueOf(bright));
             printBinary((byte) bleft, (byte) bright);
         }catch (Exception e){
             e.printStackTrace();
@@ -199,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         InputDevice device = event.getDevice();
         if (device != null) {
             float lx = getCenteredAxis(event, device, MotionEvent.AXIS_X);
-            float ly = getCenteredAxis(event, device, MotionEvent.AXIS_Y);
+            float ly = -getCenteredAxis(event, device, MotionEvent.AXIS_Y);
             float rx = getCenteredAxis(event, device, MotionEvent.AXIS_Z);
             float ry = getCenteredAxis(event, device, MotionEvent.AXIS_RZ);
 
@@ -282,9 +289,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int combineByte(byte bleft, byte bright) {
+    public byte combineByte(byte bleft, byte bright) {
         // Dịch trái bright 4 lần rồi kết hợp với bleft bằng phép OR
-        return (bright << 4) | (bleft & 0x0F);
+        return (byte) ((bright << 4) | (bleft & 0x0F));
     }
 
     private void sendData(final String data) {
@@ -293,6 +300,19 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     byte[] sendData = data.getBytes("UTF-8");
+                    DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+                    socket.send(packet);
+                } catch (IOException e) {
+                }
+            }
+        }).start();
+    }
+    private void sendData(final byte data) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    byte[] sendData = new byte[]{data};
                     DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
                     socket.send(packet);
                 } catch (IOException e) {
@@ -309,8 +329,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int map(int x, int in_min, int in_max, int out_min, int out_max) {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    public byte map(int x, int in_min, int in_max, int out_min, int out_max) {
+        return (byte)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
     }
 
 }
