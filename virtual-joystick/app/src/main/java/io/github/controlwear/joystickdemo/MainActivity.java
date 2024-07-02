@@ -58,19 +58,25 @@ public class MainActivity extends AppCompatActivity {
         mSeekServo = findViewById(R.id.seekBar2);
 
         // Anh xa den cac thanh phan trong UI
+        // ipAddressEditText: EditText cho lúc nhập IP address trong app.
         ipAddressEditText = findViewById(R.id.ipAddressEditText);
+        // portEditText: EditTextcho lúc nhập port number trong app.
         portEditText = findViewById(R.id.portEditText);
+        // connectButton: Nút kết nối.
         connectButton = findViewById(R.id.connectButton);
 
         // Create a new thread
         Thread backgroundThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                // Chạy đến khi cái thread bị dừng
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
+                        // Gộp 2 values right left thành 1 byte
                         byte packet = combineByte((byte) bleft, (byte) bright);
 //                        sendData(String.valueOf(packet));
                         sendData(packet);
+                        // ngủ 80 mili giây giữa những lần gửi để tránh overflow network.
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                         // Handle interruption if needed
@@ -86,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String ipAddress = ipAddressEditText.getText().toString();
                 String portStr = portEditText.getText().toString();
-
+                // Kiểm tra IP address hoặc port is empty
                 if (ipAddress.isEmpty() || portStr.isEmpty()) {
                     connectButton.setText("NULL");
                 } else {
@@ -103,11 +109,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        
+        // Tìm left joystick view.
         JoystickView joystickLeft = findViewById(R.id.joystickView_left);
+        // Gán move listener for the left joystick.
         joystickLeft.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
+                // Update left joystick dựa trên góc và độ mạnh.
                 updateLeftJoystick(angle, strength);
             }
         });
@@ -125,15 +134,17 @@ public class MainActivity extends AppCompatActivity {
     private void updateLeftJoystick(int angle, int strength) {
         mTextViewAngleLeft.setText(angle + "°");
         mTextViewStrengthLeft.setText(strength + "%");
-
+        
+        // nếu strength > 98 gán strength value = 100.
         try {if (strength > 98) strength = 100;
             if (angle < 180 && angle > 0) {
+                // Map angle and strength to the bleft value based on joystick movement.
                 bleft = map(strength, 0, 100, 8, 14);
             } else if (angle < 360 && angle > 180) {
                 bleft = map(strength, 0, 100, 6, 0);
             }
             else bleft = 7;
-
+            // Updates the speed text view.
             mViewSpeed.setText("Speed: " + String.valueOf(bleft));
 
             printBinary(bleft, bright);
@@ -166,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        // Checks if the event is from a joystick (Controller) and is a move action.
         if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK &&
                 event.getAction() == MotionEvent.ACTION_MOVE) {
             processJoystickInput(event);
@@ -177,14 +189,19 @@ public class MainActivity extends AppCompatActivity {
     private void processJoystickInput(MotionEvent event) {
         InputDevice device = event.getDevice();
         if (device != null) {
+            // Gets the centered axis value for the left joystick's X axis.
             float lx = getCenteredAxis(event, device, MotionEvent.AXIS_X);
+            // Same but with Y (Dấu trừ trước do config bị ngược nên nhân - thì bth lại)
             float ly = -getCenteredAxis(event, device, MotionEvent.AXIS_Y);
+            // Gets the centered axis value for the right joystick's X axis.
             float rx = getCenteredAxis(event, device, MotionEvent.AXIS_Z);
+            // Right joystick Y
             float ry = getCenteredAxis(event, device, MotionEvent.AXIS_RZ);
 
             // Map these values to the virtual joystick updates
             int leftAngle = calculateAngle(lx, ly);
             int leftStrength = calculateStrength(lx, ly);
+            // Updates the left joystick based on the angle and strength values.
             updateLeftJoystick(leftAngle, leftStrength);
 
             int rightAngle = calculateAngle(rx, ry);
@@ -196,23 +213,28 @@ public class MainActivity extends AppCompatActivity {
     private float getCenteredAxis(MotionEvent event, InputDevice device, int axis) {
         InputDevice.MotionRange range = device.getMotionRange(axis, event.getSource());
         if (range != null) {
+            // Gets the axis value.
             float value = event.getAxisValue(axis);
+            // Gets the flat value (dead zone) for the axis.
             float flat = range.getFlat();
+            // Returns the value if it is outside the dead zone.
             if (Math.abs(value) > flat) {
                 return value;
             }
         }
+        // Value is within the dead zone
         return 0;
     }
 
     private int calculateAngle(float x, float y) {
+        // Adjusts the angle to be in the range 0-360 degrees.
         double angle = Math.toDegrees(Math.atan2(y, x));
         if (angle < 0) {
             angle += 360;
         }
         return (int) angle;
     }
-
+    // Calculates the strength as a percentage based on the X and Y values.
     private int calculateStrength(float x, float y) {
         return (int) (Math.sqrt(x * x + y * y) * 100);
     }
@@ -222,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("ADebugBinary", "Value: " + packet + " " );
         Log.d("ADebugTag", "b Left =: " + bleft + "; b Right =:" + bright);
-
+        // Converts the bleft, bright byte to a binary string and formats it to 4 bits.
         String bleftBinary = String.format("%4s", Integer.toBinaryString(bleft & 0xFF)).replace(' ', '0');
         String brightBinary = String.format("%4s", Integer.toBinaryString(bright & 0xFF)).replace(' ', '0');
         String rsBinary = String.format("%4s", Integer.toBinaryString(packet & 0xFF)).replace(' ', '0');
@@ -259,11 +281,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendData(final byte data) {
+        // Creates and starts a new thread to send the data.
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     byte sendData = data;
+                    // Creates a DatagramPacket with the data, length, server address, and server port.
                     DatagramPacket packet = new DatagramPacket(new byte[]{sendData}, 1, serverAddress, serverPort);
                     socket.send(packet);
                 } catch (IOException e) {
